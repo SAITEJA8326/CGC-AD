@@ -1,0 +1,103 @@
+# ---------------------------------------------------------------------------
+# CGC-AD  .gitignore
+# Rule of thumb: source, configs, README assets and the small JSONL result
+# files are tracked; everything a run GENERATES (checkpoints, feature banks,
+# traces, logs) and everything you DOWNLOAD (datasets) is not.
+# ---------------------------------------------------------------------------
+
+# --- Python ---------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.python-version
+
+# --- virtual environments -------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+
+# --- testing / tooling caches ---------------------------------------------
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+
+# --- experiment outputs (regenerable, large) -------------------------------
+# `out_dir` defaults to /kaggle/working/cgc_ad_runs; when you run locally these
+# are the folders that appear in the repo.
+cgc_ad_runs/
+cgc_ad_banks/
+runs/
+ckpt/
+checkpoints/
+banks/
+traces/
+*.pt
+*.pth
+*.ckpt
+*.npz
+*.npy
+*.safetensors
+
+# experiment trackers
+wandb/
+lightning_logs/
+tb_logs/
+events.out.tfevents.*
+*.tfevents.*
+mlruns/
+
+# scratch results (the curated result files in tests/results/ ARE tracked)
+results/*.tmp
+*.jsonl.bak
+*.jsonl.tmp
+*.tmp
+
+# --- datasets (never commit these; respect each dataset's licence) ---------
+data/
+datasets/
+mvtec_ad/
+mvtec-ad/
+visa/
+*.tar
+*.tar.xz
+*.tar.gz
+*.zip
+
+# --- notebooks --------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb
+
+# --- secrets & local config -------------------------------------------------
+.env
+.env.*
+*.pem
+kaggle.json
+.kaggle/
+.netrc
+
+# --- editors / OS -----------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- logs -------------------------------------------------------------------
+*.log
+log.txt

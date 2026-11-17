@@ -1,0 +1,75 @@
+# Paper 1 -- "What a label-free conformal threshold can control"
+#
+# Replaces configs/breakdown.yaml for every Paper-1 experiment. Differences,
+# each fixing a confound found in the round-3 results:
+#
+#   stream.adapt: false     breakdown.yaml had adapt=true. Adaptation events
+#                           fine-tune the head AND refit tau, so r3_static was
+#                           recalibrated ~1.24x per run (not static), and arms
+#                           scored the stream with different heads.
+#   14 classes              5 classes put the exact Wilcoxon floor at 0.0625:
+#                           no contrast could reach p < 0.05 at any effect size.
+#                           At 14 the floor is 1.2e-4.
+#   drift: combo @ 0.3      brightness @ 0.25 moved clean AUROC by -0.001, so
+#                           "drifted" runs were effectively stationary. combo @
+#                           0.3 is the phase-1 regime (retention ~ -0.12): the
+#                           detector degrades but still works. Run a second
+#                           regime with drift.kind=none; the claims split cleanly
+#                           between the two (see R4_PLAN.md).
+#   head cache + RNG fix    every arm of a comparison now scores the stream with
+#                           a bit-identical head, trained once per (class, seed).
+#
+# Never override these per arm. Arms differ ONLY in the `threshold.*` and
+# `stream.buffer_protocol / admit_explore` fields listed in R4_PLAN.md.
+seed: 0
+out_dir: /kaggle/working/cgc_ad_runs
+tag: paper1
+device: cuda
+data:
+  root: /kaggle/input/mvtec-ad
+  # All active categories. toothbrush is excluded by the attainability audit:
+  # n_calib = 15 cannot express alpha = 0.05.
+  classes: [bottle, cable, capsule, carpet, grid, hazelnut, leather, metal_nut,
+            pill, screw, tile, transistor, wood, zipper]
+  image_size: 224
+  n_calib: 60
+  n_val: 30
+synth:
+  n_levels: 6
+  variants_per_image: 2
+model:
+  backbone: wide_resnet50_2
+  proj_dim: 128
+  feat_size: 28
+train:
+  max_steps: 8000
+  batch_size: 32
+  deterministic: true
+curriculum:
+  kind: random
+  signal: zscore
+threshold:
+  policy: aci
+  alpha: 0.05
+  window: 200
+  gamma_aci: 0.01
+  trim_eps: 0.05
+  aci_update_on: admitted
+stream:
+  steps: 1500
+  prevalence: 0.05
+  buffer_protocol: clean
+  contamination: 0.0
+  admit_explore: 0.0
+  adapt: false
+  burst_start: -1
+  burst_len: 0
+  burst_prevalence: 0.40
+drift:
+  kind: combo
+  severity: 0.3
+  onset: 500
+  ramp: 200
+ckpt:
+  cache_banks: true
+  head_cache: true

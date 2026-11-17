@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cgc-ad"
+version = "0.1.0"
+description = "Label-free conformal thresholds for streaming visual anomaly detection (MVTec AD)"
+readme = "README.md"
+# numpy-only core: conformal.py, analyze / audit / equivalence / figures
+dependencies = ["numpy", "PyYAML"]
+
+[project.optional-dependencies]
+# model training and the streaming simulator (install the torch wheel that
+# matches your CUDA setup first: https://pytorch.org)
+train = ["torch", "torchvision", "scikit-learn", "Pillow"]
+plots = ["matplotlib"]
+dev   = ["pytest"]
+
+[tool.setuptools]
+packages = ["cgc_ad"]

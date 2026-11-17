@@ -1,0 +1,45 @@
+# Phase-3 main grid: all 15 MVTec classes, full budget, adaptation on.
+seed: 0
+out_dir: /kaggle/working/cgc_ad_runs
+tag: main
+device: cuda
+data:
+  root: /kaggle/input/mvtec-ad
+  classes: [bottle, cable, capsule, carpet, grid, hazelnut, leather, metal_nut,
+            pill, screw, tile, toothbrush, transistor, wood, zipper]
+  image_size: 224
+  n_calib: 60
+  n_val: 30
+synth:
+  n_levels: 6
+  variants_per_image: 2
+model:
+  backbone: wide_resnet50_2
+  proj_dim: 128
+  feat_size: 28
+train:
+  max_steps: 2000
+  batch_size: 32
+curriculum:
+  kind: proportional
+  target_miss: 0.15
+  eta: 0.15
+  signal: conformal
+threshold:
+  policy: aci
+  alpha: 0.05
+  window: 200
+  gamma_aci: 0.01
+stream:
+  steps: 1500
+  prevalence: 0.05
+  buffer_protocol: clean
+  adapt: true
+  adapt_trigger: martingale
+  adapt_steps: 100
+  couple: true
+drift:
+  kind: combo
+  severity: 0.6
+  onset: 500
+  ramp: 200

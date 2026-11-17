@@ -1,0 +1,20 @@
+# Normalise line endings (the repo is developed on Windows, run on Linux/Kaggle).
+* text=auto
+
+*.py   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.md   text eol=lf
+*.toml text eol=lf
+*.txt  text eol=lf
+*.ini  text eol=lf
+*.cmd  text eol=crlf
+
+# Raw result files: keep them out of diffs and out of GitHub's language stats.
+*.jsonl -diff linguist-generated=true
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.pdf  binary

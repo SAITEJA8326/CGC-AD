@@ -1,0 +1,86 @@
+# Backbone ablation: does the architecture explain the curriculum null result?
+#
+# Verify the extractor BEFORE spending quota:
+#     python -m cgc_ad.backbones --probe
+#
+# Stage 1 -- gate only (minutes per class, no deployment stream). This is the
+# precondition: if the hardness axis is not monotone in detectability under a
+# new backbone either, no controller can work there and the full replication
+# is not worth running.
+#     for bb in wide_resnet50_2 convnext_base vit_b_16 swin_t; do
+#       python -m cgc_ad.run --config configs/backbone_ablation.yaml \
+#         --stage gate --tag gate_$bb --resume --set model.backbone=$bb
+#     done
+#
+# Stage 2 -- only if a backbone flips the gate: replicate the controller
+# comparison on ALL classes (selecting only the classes ResNet failed on is
+# selection bias and reviewers will say so).
+#     for bb in wide_resnet50_2 convnext_base vit_b_16 swin_t; do
+#       for k in random distributional; do
+#         python -m cgc_ad.run --config configs/backbone_ablation.yaml \
+#           --seeds 0,1,2,3,4 --tag bb_${bb}_${k} --resume \
+#           --set model.backbone=$bb curriculum.kind=$k
+#       done
+#     done
+#
+# Stage 3 -- multi-stage (FPN-style) arm, one extra factor:
+#     --set model.stages=s1,s2,s3
+#
+# Stage 4 -- resolution sensitivity. ViT's stages are natively 14x14, so at
+# feat_size=28 its map is entirely interpolated. Fixed feat_size keeps the head
+# and the top-k aggregation identical across arms (the right default), but the
+# sensitivity arm must be reported:
+#     --set model.feat_size=14
+#
+# NOTE: image_size stays 224. torchvision's vit_b_16 asserts on anything else,
+# and build_backbone raises at construction rather than mid-run.
+seed: 0
+out_dir: /kaggle/working/cgc_ad_runs
+tag: backbone
+device: cuda
+data:
+  root: /kaggle/input/mvtec-ad
+  # All 14 active classes. Running only the classes ResNet failed on would be
+  # selection bias: you must show a new backbone fixes the structural classes
+  # WITHOUT collapsing on the textural ones.
+  classes: [bottle, cable, capsule, carpet, grid, hazelnut, leather, metal_nut,
+            pill, screw, tile, transistor, wood, zipper]
+  image_size: 224          # locked: vit_b_16 accepts nothing else
+  n_calib: 60
+  n_val: 30
+synth:
+  n_levels: 6
+  variants_per_image: 2
+model:
+  backbone: wide_resnet50_2   # swept
+  stages: [s2, s3]            # architecture-independent; [s1,s2,s3] = multi-stage
+  feat_size: 28
+  proj_dim: 128               # always applied, so head width is identical everywhere
+  head_width: 128
+  pretrained: true
+train:
+  max_steps: 8000             # locked to the incumbent, per phase 2 budget parity
+  batch_size: 32
+curriculum:
+  kind: random
+  signal: zscore              # conformal showed no advantage (phase 6)
+threshold:
+  policy: aci
+  alpha: 0.05
+  window: 200
+  gamma_aci: 0.01
+  aci_update_on: all
+stream:
+  steps: 1500
+  prevalence: 0.05
+  buffer_protocol: clean
+  admit_explore: 0.05
+  adapt: true
+  adapt_trigger: martingale
+  adapt_steps: 100
+  couple: true
+drift:
+  kind: brightness
+  severity: 0.3               # locked in phase 1
+  onset: 500
+  ramp: 200

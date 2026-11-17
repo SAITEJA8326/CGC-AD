@@ -1,0 +1,20 @@
+# Core numerical / analysis stack (enough for conformal.py, analyze, audit,
+# equivalence, figures and scripts/make_readme_assets.py)
+numpy
+matplotlib
+Pillow
+PyYAML
+
+# Model training / streaming simulator (cgc_ad.run, backbones, engine)
+# Install the torch wheel that matches your CUDA setup, see https://pytorch.org
+# The paper's runs used torch 2.10.0+cu128 on a Tesla T4.
+torch
+torchvision
+scikit-learn
+
+# Tests
+pytest
+
+# Optional experiment tracking (degrades to a no-op when absent)
+# tensorboard
+# wandb

@@ -1,0 +1,36 @@
+# Smoke test: 2 classes, tiny budget. Should finish in ~3 min on a T4.
+seed: 0
+out_dir: /kaggle/working/cgc_ad_runs
+tag: quick
+device: cuda
+data:
+  root: /kaggle/input/mvtec-ad
+  classes: [bottle, carpet]
+  image_size: 224
+  n_calib: 50
+  n_val: 25
+synth:
+  n_levels: 5
+  variants_per_image: 1
+model:
+  backbone: resnet18
+  proj_dim: 128
+  feat_size: 28
+train:
+  max_steps: 400
+  batch_size: 32
+curriculum:
+  kind: proportional
+  signal: conformal
+threshold:
+  policy: aci
+  alpha: 0.05
+  window: 200
+stream:
+  steps: 600
+  adapt: false
+drift:
+  kind: brightness
+  severity: 0.6
+  onset: 250
+  ramp: 100

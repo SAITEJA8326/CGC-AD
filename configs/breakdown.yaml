@@ -1,0 +1,65 @@
+# Contamination breakdown, done correctly.
+#
+# Sweep ONLY stream.contamination. Hold prevalence and trim_eps fixed, or the
+# columns are not comparable -- that was the defect in the first attempt, where
+# `prevalence` moved, `contamination` stayed at 0.00 throughout, and `trim_eps`
+# tracked the sweep variable in the robust column.
+#
+# Drive it as:
+#   for proto in clean self_label gated; do
+#     for eps in 0.0 0.01 0.02 0.05 0.10 0.20; do
+#       python -m cgc_ad.run --config configs/breakdown.yaml --resume \
+#         --seeds 0,1,2 --tag bd_${proto}_${eps} \
+#         --set stream.buffer_protocol=$proto stream.contamination=$eps
+#     done
+#   done
+# plus the two degeneracy ablations:
+#   --set threshold.aci_update_on=admitted stream.admit_explore=0.0   (broken)
+#   --set threshold.aci_update_on=all      stream.admit_explore=0.05  (fixed)
+seed: 0
+out_dir: /kaggle/working/cgc_ad_runs
+tag: breakdown
+device: cuda
+data:
+  root: /kaggle/input/mvtec-ad
+  # Five classes that PASS the monotonicity gate, so the buffer result is not
+  # confounded by a broken hardness axis. toothbrush is excluded: n_calib=15
+  # makes alpha=0.05 unattainable.
+  classes: [bottle, carpet, hazelnut, tile, wood]
+  image_size: 224
+  n_calib: 60
+  n_val: 30
+synth:
+  n_levels: 6
+  variants_per_image: 2
+model:
+  backbone: wide_resnet50_2
+  proj_dim: 128
+  feat_size: 28
+train:
+  max_steps: 8000
+  batch_size: 32
+curriculum:
+  kind: random          # refuted as a controller; used here as the strong default
+threshold:
+  policy: aci
+  alpha: 0.05
+  window: 200
+  gamma_aci: 0.01
+  trim_eps: 0.05        # FIXED across the sweep
+  aci_update_on: all    # the fix; set to `admitted` for the degeneracy arm
+stream:
+  steps: 1500
+  prevalence: 0.05      # FIXED across the sweep
+  buffer_protocol: clean
+  contamination: 0.0    # <-- THE SWEEP VARIABLE
+  admit_explore: 0.05   # breaks the tau ratchet; set to 0.0 for the ablation arm
+  adapt: true
+  adapt_trigger: martingale
+  adapt_steps: 100
+  couple: true
+drift:
+  kind: brightness
+  severity: 0.25        # moderate: the detector should degrade, not collapse
+  onset: 500
+  ramp: 200
